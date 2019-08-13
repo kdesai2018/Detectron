@@ -45,7 +45,7 @@ Possible fix: ensure that the usb_cam package has been launched and is running
 * Error message "usage: infer_simple.py...." <br/>
 Possible fix: ensure that there is a period ``` . ``` at the end of the ``` rosrun detectron infer_simple.py``` command.
 
-* Error with ```rosrun detectron infer_simple.py .```
+* Error with ```rosrun detectron infer_simple.py .``` <br/>
 Possible fix: navigate to your cloned Detectron package and run ```python2 tools/infer_simple.py .``` on the terminal
 
 
