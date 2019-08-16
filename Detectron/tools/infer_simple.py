@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python2
 
 # Copyright (c) 2017-present, Facebook, Inc.
 #
@@ -53,19 +53,22 @@ from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
 from PIL import Image as PL
 
+
 c2_utils.import_detectron_ops()
 
 # OpenCL may be enabled by default in OpenCV3; disable it because it's not
 # thread safe and causes unwanted GPU memory allocations.
 cv2.ocl.setUseOpenCL(False)
 
-p
+# os.chdir("/home/dirac/catkin_ws/src/detectron/Detectron")
+
 def parse_args():
     parser = argparse.ArgumentParser(description='End-to-end inference')
     parser.add_argument(
         '--cfg',
         dest='cfg',
         help='cfg model file (/path/to/model_config.yaml)',
+        # default='configs/12_2017_baselines/retinanet_R-101-FPN_2x.yaml',
         default='configs/12_2017_baselines/e2e_mask_rcnn_R-101-FPN_2x.yaml',
         type=str
     )
@@ -73,35 +76,7 @@ def parse_args():
         '--wts',
         dest='weights',
         help='weights model file (/path/to/model_weights.pkl)',
-        # default='/tmp/detectron-output/train/coco_2014_train:coco_2014_valminusminival/retinanet/model_final.pkl',
         default='https://dl.fbaipublicfiles.com/detectron/35861858/12_2017_baselines/e2e_mask_rcnn_R-101-FPN_2x.yaml.02_32_51.SgT4y1cO/output/train/coco_2014_train:coco_2014_valminusminival/generalized_rcnn/model_final.pkl',
-        type=str
-    )
-    parser.add_argument(
-        '--output-dir',
-        dest='output_dir',
-        help='directory for visualization pdfs (default: /tmp/infer_simple)',
-        default='/tmp/infer_simple',
-        type=str
-    )
-    parser.add_argument(
-        '--image-ext',
-        dest='image_ext',
-        help='image file name extension (default: jpg)',
-        default='jpg',
-        type=str
-    )
-    parser.add_argument(
-        '--always-out',
-        dest='out_when_no_box',
-        help='output image even when no object is found',
-        action='store_true'
-    )
-    parser.add_argument(
-        '--output-ext',
-        dest='output_ext',
-        help='output image file format (default: pdf)',
-        default='jpg',
         type=str
     )
     parser.add_argument(
@@ -119,7 +94,7 @@ def parse_args():
         type=float
     )
     parser.add_argument(
-        'im_or_folder', help='image or folder of images', default="."
+        'im_or_folder', help='image or folder of images', default='.'
     )
     if len(sys.argv) == 1:
         parser.print_help()
@@ -128,14 +103,10 @@ def parse_args():
 
 class get_image:
     def __init__(self):
-
         self.bridge = CvBridge()
 
-        #uncomment the line below to run inference from moe (siml robot)
-        # self.image_subscriber = rospy.Subscriber('/camera/color/image_raw', Image, self.callback)
-       
-       # uncomment the line below to run inference from the alienware webcam
-       self.image_subscriber = rospy.Subscriber('/usb_cam/image_raw', Image, self.callback)
+        # edit this topic based on where the camera topic is located (eg: "/usb_cam/image_raw")
+        self.image_subscriber = rospy.Subscriber("/usb_cam/image_raw", Image, self.callback)
 
     def callback(self,data):
         cv_image = None
@@ -144,7 +115,6 @@ class get_image:
         except CvBridgeError as e:
             print(e)
 
-        (rows, cols, channels) = cv_image.shape
         args.im_or_folder = cv_image
 
 def talker(i):
@@ -152,20 +122,13 @@ def talker(i):
     brdg = CvBridge()
     image_publisher.publish(brdg.cv2_to_imgmsg(i, "bgr8"))
 
-
-
 def main(args):
-    #ros stuff
+    #ros initialization
     rospy.init_node('get_image', anonymous=True)
-
 
     args.im_or_folder = get_image()
 
-
     while not rospy.is_shutdown():
-
-        logger = logging.getLogger(__name__)
-
         merge_cfg_from_file(args.cfg)
         cfg.NUM_GPUS = 1
         args.weights = cache_url(args.weights, cfg.DOWNLOAD_CACHE)
@@ -178,56 +141,39 @@ def main(args):
 
         model = infer_engine.initialize_model_from_cfg(args.weights)
         dummy_coco_dataset = dummy_datasets.get_coco_dataset()
-        #
-        im_list = [args.im_or_folder]
+        # set im list to be the ros image
+        im = args.im_or_folder
 
-        im_name = "test"
-        for i in enumerate(im_list):
-            out_name = os.path.join(
-                args.output_dir, '{}'.format(os.path.basename(im_name) + '.' + args.output_ext)
+        timers = defaultdict(Timer)
+        with c2_utils.NamedCudaScope(0):
+            cls_boxes, cls_segms, cls_keyps = infer_engine.im_detect_all(model, im, None, timers=timers
             )
-            logger.info('Processing {} -> {}'.format(im_name, out_name))
-            im = args.im_or_folder
+        # calls the method that performs actual detection and inference
+        fig = vis_utils.vis_one_image_opencv(
+            im[:, :, ::-1],  # BGR -> RGB for visualization
+            cls_boxes,
+            cls_segms,
+            cls_keyps,
+            dataset=dummy_coco_dataset,
+            show_class=True,
+            thresh=args.thresh,
+            kp_thresh=args.kp_thresh,
+        )
 
-            timers = defaultdict(Timer)
-            t = time.time()
-            with c2_utils.NamedCudaScope(0):
-                cls_boxes, cls_segms, cls_keyps = infer_engine.im_detect_all(
-                    model, im, None, timers=timers
-                )
-
-            fig = vis_utils.vis_one_image_opencv(
-                im[:, :, ::-1],  # BGR -> RGB for visualization
-                # im_name,
-                # args.output_dir,
-                cls_boxes,
-                cls_segms,
-                cls_keyps,
-                dataset=dummy_coco_dataset,
-                # box_alpha=0.3,
-                show_class=True,
-                thresh=args.thresh,
-                kp_thresh=args.kp_thresh,
-                # ext=args.output_ext,
-                # out_when_no_box=args.out_when_no_box
-            )
-
-            # img is rgb, convert to opencv's default bgr
-            img = cv2.cvtColor(fig, cv2.COLOR_RGB2BGR)
+        # img is rgb, convert to opencv's default bgr
+        img = cv2.cvtColor(fig, cv2.COLOR_RGB2BGR)
 
 
-            image_publisher = rospy.Publisher('detectron_output', Image, queue_size=10)
-            brdg = CvBridge()
-            image_publisher.publish(brdg.cv2_to_imgmsg(img, "bgr8"))
-
-            try:
-
-                # while(1):
-                print('Finished..Hold Ctrl+C to end')
-                main(args)
-            except KeyboardInterrupt:
-                print("shutting down")
-                cv2.destroyAllWindows()
+        image_publisher = rospy.Publisher('detectron_output', Image, queue_size=10)
+        brdg = CvBridge()
+        image_publisher.publish(brdg.cv2_to_imgmsg(img, "bgr8"))
+        try:
+            start_time = time.time()
+            print(time.time()-start_time)
+            main(args)
+        except KeyboardInterrupt:
+            print("shutting down")
+            cv2.destroyAllWindows()
 
 
 
