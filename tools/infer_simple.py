@@ -130,7 +130,12 @@ class get_image:
     def __init__(self):
 
         self.bridge = CvBridge()
-        self.image_subscriber = rospy.Subscriber('/usb_cam/image_raw', Image, self.callback)
+
+        #uncomment the line below to run inference from moe (siml robot)
+        # self.image_subscriber = rospy.Subscriber('/camera/color/image_raw', Image, self.callback)
+       
+       # uncomment the line below to run inference from the alienware webcam
+       self.image_subscriber = rospy.Subscriber('/usb_cam/image_raw', Image, self.callback)
 
     def callback(self,data):
         cv_image = None
