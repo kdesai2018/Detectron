@@ -2,7 +2,7 @@
 
 Detectron is Facebook AI Research's software system that implements state-of-the-art object detection algorithms, including [Mask R-CNN](https://arxiv.org/abs/1703.06870). It is written in Python and powered by the [Caffe2](https://github.com/caffe2/caffe2) deep learning framework.
 
-This update to the original Detectron code aims to communicate images with segmentation and object identification over a ROS node, aiding in computer vision projects in the field of Robotics. See [`INSTALL.md`](INSTALL.md) for installation instructions for Caffe2 and Detectron. Note that this project has been tested on ROS Kinetic with python 2. See below for ROS-specific instructions.
+This update to the original Detectron code aims to communicate images with segmentation and object identification over a ROS node, aiding in computer vision projects in the field of Robotics. See [`INSTALL.md`](Facebook_Documentation/INSTALL.md) for installation instructions for Caffe2 and Detectron. Note that this project has been tested on ROS Kinetic with python 2. See below for ROS-specific instructions.
 
 To see a video demo of this ROS package running from a laptop webcam, watch the youtube [video](https://youtu.be/iqWTFGoJn9I).
 
@@ -16,7 +16,7 @@ to support rapid implementation and evaluation of novel research.
 
 ## Installation
 
-Please find installation instructions for Caffe2 and Detectron in [`INSTALL.md`](INSTALL.md). For further installation questions and troubleshooting, visit the FAIR [github](https://github.com/facebookresearch/Detectron "Original Detectron").
+Please find installation instructions for Caffe2 and Detectron in [`INSTALL.md`](Facebook_Documentation/INSTALL.md). For further installation questions and troubleshooting, visit the FAIR [github](https://github.com/facebookresearch/Detectron "Original Detectron").
 
 # ROS instructions
 
