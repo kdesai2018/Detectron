@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>ROS Detectron Package</name>
+  <name>Detectron</name>
   <version>1.0.0</version>
   <description>Publishing object identification and segmentation information using the Facebook Detectron algorithm</description>
 
