@@ -30,11 +30,11 @@ Additionally,
 
 # Some Image Examples 
 <div align="center">
-  <img src="demo/ros_images/ros_example1.png" width="700px" />
+  <img src="Detectron/demo/ros_images/ros_example1.png" width="700px" />
   <p>Inference on an iPhone</p>
-  <img src="demo/ros_images/ros_example2.png" width="700px" />
+  <img src="Detectron/demo/ros_images/ros_example2.png" width="700px" />
   <p>Inference on a spoon</p>
-  <img src="demo/ros_images/ros_example3.png" width="700px" />
+  <img src="Detectron/demo/ros_images/ros_example3.png" width="700px" />
   <p>Inference on a frisbee</p>
 </div>
 
